@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -224,8 +225,57 @@ void q_reverseK(struct list_head *head, int k)
     // https://leetcode.com/problems/reverse-nodes-in-k-group/
 }
 
+struct list_head *merge_Two_list(struct list_head *left,
+                                 struct list_head *right)
+{
+    struct list_head *new_head = NULL, **indirect = &new_head,
+                     **iter_node = NULL;
+    for (; left && right; *iter_node = (*iter_node)->next) {
+        iter_node = strcmp(list_entry(left, element_t, list)->value,
+                           list_entry(right, element_t, list)->value) >= 0
+                        ? &right
+                        : &left;
+        *indirect = *iter_node;
+        indirect = &(*indirect)->next;
+    }
+    *indirect = (struct list_head *) ((uintptr_t) left | (uintptr_t) right);
+    return new_head;
+}
+
+struct list_head *q_divide(struct list_head *head)
+{
+    if (!head || !head->next)
+        return head;
+    struct list_head *fast = head, *slow = head, *mid;
+
+    for (; fast && fast->next; fast = fast->next->next, slow = slow->next)
+        ;
+    mid = slow;
+    slow->prev->next = NULL;
+
+    struct list_head *left = q_divide(head);
+    struct list_head *right = q_divide(mid);
+
+    return merge_Two_list(left, right);
+}
+
 /* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+void q_sort(struct list_head *head, bool descend)
+{
+    if (!head || list_empty(head))
+        return;
+
+    head->prev->next = NULL;
+    head->next = q_divide(head->next);
+
+    struct list_head *iter_node;
+    for (iter_node = head; iter_node->next != NULL;
+         iter_node = iter_node->next) {
+        iter_node->next->prev = iter_node;
+    }
+    iter_node->next = head;
+    head->prev = iter_node;
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
