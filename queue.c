@@ -281,22 +281,84 @@ void q_sort(struct list_head *head, bool descend)
  * the right side of it */
 int q_ascend(struct list_head *head)
 {
+    if (!head || list_empty(head))
+        return 0;
+
+    int node_num = 0;
+
+    element_t *ele = list_entry(head->next, element_t, list);
+    element_t *ele_next = list_entry(head->next->next, element_t, list);
+    while (&ele_next->list != head) {
+        if (strcmp(ele->value, ele_next->value) < 0) {
+            ele_next = list_entry(ele_next->list.next, element_t, list);
+            ele = list_entry(ele->list.next, element_t, list);
+            node_num++;
+        } else {
+            list_del(&ele_next->list);
+            q_release_element(ele_next);
+            ele_next = list_entry(ele->list.next, element_t, list);
+        }
+    }
+    return ++node_num;
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
 int q_descend(struct list_head *head)
 {
+    if (!head || list_empty(head))
+        return 0;
+
+    int node_num = 0;
+
+    element_t *ele = list_entry(head->prev, element_t, list);
+    element_t *ele_prev = list_entry(head->prev->prev, element_t, list);
+    while (&ele_prev->list != head) {
+        if (strcmp(ele->value, ele_prev->value) < 0) {
+            ele_prev = list_entry(ele_prev->list.prev, element_t, list);
+            ele = list_entry(ele->list.prev, element_t, list);
+            node_num++;
+        } else {
+            list_del(&ele_prev->list);
+            q_release_element(ele_prev);
+            ele_prev = list_entry(ele->list.prev, element_t, list);
+        }
+    }
+    return ++node_num;
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
 }
+
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
  * order */
 int q_merge(struct list_head *head, bool descend)
 {
+    if (!head || list_empty(head))
+        return 0;
+
+    int node_num = 0;
+    struct list_head *first = list_entry(head->next, queue_contex_t, chain)->q;
+    node_num += q_size(first);
+    first->prev->next = NULL;
+    struct list_head *iter_node = head->next->next;
+
+    while (iter_node != head) {
+        struct list_head *sub = list_entry(iter_node, queue_contex_t, chain)->q;
+        node_num += q_size(sub);
+        sub->prev->next = NULL;
+        first->next = merge_Two_list(first->next, sub->next);
+        INIT_LIST_HEAD(sub);
+        iter_node = iter_node->next;
+    }
+
+    struct list_head *node;
+    for (node = first; node->next != NULL; node = node->next) {
+        node->next->prev = node;
+    }
+    node->next = first;
+    first->prev = node;
+
+    return node_num;
     // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
 }
