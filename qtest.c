@@ -23,6 +23,8 @@
 #include "list.h"
 #include "random.h"
 
+#include "list_sort.h"
+
 /* Shannon entropy */
 extern double shannon_entropy(const uint8_t *input_data);
 extern int show_entropy;
@@ -59,6 +61,8 @@ extern int show_entropy;
 
 /* Global variables */
 
+static int use_list_sort = 0;
+
 typedef struct {
     struct list_head head;
     int size;
@@ -85,6 +89,14 @@ typedef enum {
 } position_t;
 /* Forward declarations */
 static bool q_show(int vlevel);
+
+static int cmp(void *priv,
+               const struct list_head *list1,
+               const struct list_head *list2)
+{
+    return strcmp(list_entry(list1, element_t, list)->value,
+                  list_entry(list2, element_t, list)->value);
+}
 
 static bool do_free(int argc, char *argv[])
 {
@@ -600,8 +612,12 @@ bool do_sort(int argc, char *argv[])
     error_check();
 
     set_noallocate_mode(true);
-    if (current && exception_setup(true))
-        q_sort(current->q, descend);
+    if (current && exception_setup(true)) {
+        if (use_list_sort == 1)
+            list_sort(NULL, current->q, cmp);
+        else
+            q_sort(current->q, descend);
+    }
     exception_cancel();
     set_noallocate_mode(false);
 
@@ -1062,6 +1078,7 @@ static void console_init()
               "Number of times allow queue operations to return false", NULL);
     add_param("descend", &descend,
               "Sort and merge queue in ascending/descending order", NULL);
+    add_param("listsort", &use_list_sort, "Use the list sort in Linux", NULL);
 }
 
 /* Signal handlers */
