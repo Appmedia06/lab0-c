@@ -43,7 +43,7 @@ bool q_insert_head(struct list_head *head, char *s)
     element_t *new_node = malloc(sizeof(element_t));
     if (!new_node)
         return false;
-    size_t s_len = sizeof(s);
+    size_t s_len = strlen(s);
     new_node->value = malloc((s_len + 1) * sizeof(char));
     if (!new_node->value) {
         q_release_element(new_node);
