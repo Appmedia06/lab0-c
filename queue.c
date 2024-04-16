@@ -361,4 +361,4 @@ int q_merge(struct list_head *head, bool descend)
 
     return node_num;
     // https://leetcode.com/problems/merge-k-sorted-lists/
-}
+}  // end
