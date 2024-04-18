@@ -1030,6 +1030,60 @@ static bool do_next(int argc, char *argv[])
     return q_show(0);
 }
 
+/*void swap_node(struct list_head *a, struct list_head *b)
+{
+    element_t *a_elem = list_entry(a, element_t, list);
+    element_t *b_elem = list_entry(b, element_t, list);
+
+    char *tmp = a_elem->value;
+    a_elem->value = b_elem->value;
+    b_elem->value = tmp;
+}*/
+
+
+void swap_node(element_t *a, element_t *b)
+{
+    char *tmp = a->value;
+    a->value = b->value;
+    b->value = tmp;
+}
+
+void q_shuffle(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+
+    int len = q_size(head);
+    // srand(time(NULL));
+    struct list_head *tail = head->prev, *rand_node;
+    for (int i = len; i > 1; i--) {
+        int rand_num = rand() % i;
+        rand_node = tail;
+        while (rand_num-- > 0) {
+            rand_node = rand_node->prev;
+        }
+        swap_node(list_entry(rand_node, element_t, list),
+                  list_entry(tail, element_t, list));
+        tail = tail->prev;
+    }
+}
+
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    set_noallocate_mode(true);
+    if (current && exception_setup(true))
+        q_shuffle(current->q);
+    exception_cancel();
+    set_noallocate_mode(false);
+
+    return q_show(3);
+}
+
 static void console_init()
 {
     ADD_COMMAND(new, "Create new queue", "");
@@ -1070,6 +1124,8 @@ static void console_init()
                 "");
     ADD_COMMAND(reverseK, "Reverse the nodes of the queue 'K' at a time",
                 "[K]");
+    ADD_COMMAND(shuffle,
+                "Shuffle the queue using Fisher-Yates shuffle algorithm", "");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",
